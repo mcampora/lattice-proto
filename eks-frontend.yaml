@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-v1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+      role: frontend-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: frontend
+        role: frontend-service     
+        version: v1   
+      annotations:
+        prometheus.io/scrape: 'false'     
+    spec: 
+      containers:          
+        - name: go
+          image: ${ECR_REPO}/frontend:latest
+          imagePullPolicy: Always   
+          ports:
+            - containerPort: 4000
+          env:
+            - name: BACKEND_URL
+              value: ${BACKEND_URL}
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet: 
+              path: /live
+              port: 4000
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3            
+          readinessProbe:
+            httpGet: 
+              path: /live
+              port: 4000
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3      
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-v1-svc
+  namespace: default
+spec:
+  sessionAffinity: None
+  type: ClusterIP
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 4000
+  selector:
+    app: frontend
+    role: frontend-service
+    version: v1

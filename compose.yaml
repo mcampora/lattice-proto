@@ -1,0 +1,14 @@
+# to test the backend and frontend images with docker compose
+services:
+  frontend:
+    build: ./frontend
+    image: frontend:local
+    ports:
+      - "4000:4000"
+    environment:
+      - BACKEND_URL=http://backend:3000
+  backend:
+    build: ./backend
+    image: backend:local
+    ports:
+      - "3000:3000"
